@@ -1,103 +1,108 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useState, useEffect, ChangeEvent } from 'react';
+
+type Task = {
+  title: string;
+  description: string;
+  dueDate?: string;
+  priority: string;
+  status: string;
+};
+
+function TaskManagement() {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [message, setMessage] = useState("Loading...");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filter, setFilter] = useState({ status: '', priority: '' });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchTasks();
+  }, []);
+
+  const fetchTasks = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch("http://localhost:5000/api/tasks");
+      const data = await response.json();
+      setTasks(Array.isArray(data.tasks) ? data.tasks : []);
+      setMessage(data.message || "");
+    } catch (error) {
+      setMessage("Error fetching tasks");
+      setTasks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleFilterChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    setFilter({ ...filter, [e.target.name]: e.target.value });
+  };
+
+  const filteredTasks = tasks.filter(task => {
+    const search = searchTerm.toLowerCase();
+    return (
+      (task.title.toLowerCase().includes(search) ||
+        (task.description?.toLowerCase().includes(search) ?? false)) &&
+      (filter.status ? task.status === filter.status : true) &&
+      (filter.priority ? task.priority === filter.priority : true)
+    );
+  });
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div>
+      <h1>Task Management Dashboard</h1>
+      {loading ? (
+        <div>Loading tasks...</div>
+      ) : (
+        <>
+          <div>{message}</div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+          <input
+            type="text"
+            placeholder="Search tasks..."
+            value={searchTerm}
+            onChange={handleSearch}
+            style={{ margin: "10px 0", padding: "5px" }}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+          <select name="status" onChange={handleFilterChange} style={{ marginRight: "10px" }}>
+            <option value="">All Statuses</option>
+            <option value="completed">Completed</option>
+            <option value="pending">Pending</option>
+          </select>
+
+          <select name="priority" onChange={handleFilterChange}>
+            <option value="">All Priorities</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+
+          <div style={{ marginTop: "20px" }}>
+            {filteredTasks.length === 0 ? (
+              <div>No tasks found.</div>
+            ) : (
+              filteredTasks.map((task, index) => (
+                <div key={index} style={{ border: "1px solid #ccc", padding: "10px", marginBottom: "10px" }}>
+                  <h2>{task.title}</h2>
+                  <p>{task.description}</p>
+                  <p><strong>Due Date:</strong> {task.dueDate}</p>
+                  <p><strong>Priority:</strong> {task.priority}</p>
+                  <p><strong>Status:</strong> {task.status}</p>
+                </div>
+              ))
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
+
+export default TaskManagement;
