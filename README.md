@@ -13,6 +13,8 @@ pnpm dev
 # or
 bun dev
 ```
+https://my-project1-4v2s.onrender.com
+https://my-project-nine-lac.vercel.app/
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
